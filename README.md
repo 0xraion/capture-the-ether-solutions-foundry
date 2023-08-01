@@ -6,6 +6,7 @@ Solutions to the [Capture The Ether](https://capturetheether.com/challenges/) CT
 
 -   [Lotteries](#lotteries)
     -   [Guess the number](#guess-the-number)
+    -   [Guess the secret number](#guess-the-secret-number)
 
 ## Lotteries
 
