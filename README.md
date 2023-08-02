@@ -41,7 +41,7 @@ function guess(uint8 n) public payable {
 The answer `n` is defined as a `uint8`, which ranges from 0 to 255. We can brute force the answer via a for-loop until we get the specific hash.
 
 ```solidity
-for (uint8 i = 0; i < type(uint8).max; i++) {
+for (uint8 i = 0; i <= type(uint8).max; i++) {
             bytes32 currentHash = keccak256(abi.encodePacked(i));
 
             if (currentHash == answerHash) {
