@@ -29,7 +29,7 @@ contract TestGuessTheSecretNumberChallenge is Test {
         // answerHash is not reversible
         // uint8 has a range from 0 to 255
         // so we can just brute force it until we get the right answer
-        for (uint8 i = 0; i < type(uint8).max; i++) {
+        for (uint8 i = 0; i <= type(uint8).max; i++) {
             bytes32 currentHash = keccak256(abi.encodePacked(i));
 
             if (currentHash == answerHash) {
