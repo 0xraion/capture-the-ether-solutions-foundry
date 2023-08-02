@@ -14,6 +14,7 @@ Most of the contracts were rewritten slightly so they still compile with newer s
     -   [Guess the random number](#guess-the-random-number)
     -   [Guess the new number](#guess-the-new-number)
     -   [Predict the future](#predict-the-future)
+    -   [Predict the block hash](#predict-the-block-hash)
 
 ## Lotteries
 
@@ -204,3 +205,32 @@ function solveChallenge() public {
 Call `solveChallenge` in concecutive blocks until solved. This way we only pay when we know we will win.
 
 [Test](./test/lotteries/TestPredictTheFutureChallenge.t.sol)
+
+### Predict the block hash
+
+We now have to predict the hash of a future block, which will not be possible to brute-force:
+
+```solidity
+function lockInGuess(bytes32 hash) public payable {
+  guess = hash;
+  settlementBlockNumber = block.number + 1;
+}
+
+function settle() public {
+  require(block.number > settlementBlockNumber);
+  bytes32 answer = blockhash(settlementBlockNumber);
+}
+
+```
+
+But there is a catch! From [Solidity documentation](https://docs.soliditylang.org/en/latest/units-and-global-variables.html#block-and-transaction-properties):
+
+> The block hashes are not available for all blocks for scalability reasons. You can only access the hashes of the most recent 256 blocks, all other values will be zero.
+
+This means that after 256 + 1 + 1 blocks of locking our guess our "random" answer will be 0. So we we can exploit it:
+
+1. Call `lockInGuess` with `bytes32(uint256(0))`
+2. Wait for 258 blocks (257 blocks + 1 block because `settlementBlockNumber = block.number + 1`)
+3. Call `settle`
+
+[Test](./test/lotteries/TestPredictTheBlockHashChallenge.t.sol)
