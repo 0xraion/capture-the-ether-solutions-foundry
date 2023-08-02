@@ -56,3 +56,31 @@ for (uint8 i = 0; i <= type(uint8).max; i++) {
 ```
 
 [Test](./test/lotteries/TestGuessTheSecretNumberChallenge.t.sol)
+
+### Guess the random number
+
+In this case the answer is generated "randomly" and stored "internally" in the contract (default visibility of state variables is 'internal'):
+
+```solidity
+constructor() payable {
+        require(msg.value == 1 ether);
+        answer = uint8(
+            uint256(
+                keccak256(
+                    abi.encodePacked(
+                        blockhash(block.number - 1),
+                        block.timestamp
+                    )
+                )
+            )
+        );
+    }
+```
+
+Data in smart contracts can be read despite being declared as "internal" because in the end all data on the blockchain is public. The key here is to understand how the storage works, and that the `answer` is stored in `slot 0` and therefore can be retrieved by calling:
+
+```solidity
+uint8 answer = uint8(uint256(vm.load(address(challenge), 0)));
+```
+
+[Test](./test/lotteries/TestGuessTheRandomNumberChallenge.t.sol)
