@@ -11,6 +11,7 @@ Most of the contracts were rewritten slightly so they still compile with newer s
 -   [Lotteries](#lotteries)
     -   [Guess the number](#guess-the-number)
     -   [Guess the secret number](#guess-the-secret-number)
+    -   [Guess the random number](#guess-the-random-number)
 
 ## Lotteries
 
