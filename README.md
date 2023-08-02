@@ -2,6 +2,10 @@
 
 Solutions to the [Capture The Ether](https://capturetheether.com/challenges/) CTF challenges using Foundry ⛳️
 
+## Disclaimer
+
+Most of the contracts were rewritten slightly so they still compile with newer solidity versions. Comments were added for those parts.
+
 ## Contents
 
 -   [Lotteries](#lotteries)
