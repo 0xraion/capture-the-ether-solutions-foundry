@@ -8,15 +8,19 @@ Most of the contracts were rewritten slightly so they still compile with newer s
 
 ## Contents
 
--   [Lotteries](#lotteries)
-    -   [Guess the number](#guess-the-number)
-    -   [Guess the secret number](#guess-the-secret-number)
-    -   [Guess the random number](#guess-the-random-number)
-    -   [Guess the new number](#guess-the-new-number)
-    -   [Predict the future](#predict-the-future)
-    -   [Predict the block hash](#predict-the-block-hash)
--   [Math](#math)
-    -   [Token sale](#token-sale)
+-   [Capture the Ether Solutions](#capture-the-ether-solutions)
+    -   [Disclaimer](#disclaimer)
+    -   [Contents](#contents)
+    -   [Lotteries](#lotteries)
+        -   [Guess the number](#guess-the-number)
+        -   [Guess the secret number](#guess-the-secret-number)
+        -   [Guess the random number](#guess-the-random-number)
+        -   [Guess the new number](#guess-the-new-number)
+        -   [Predict the future](#predict-the-future)
+        -   [Predict the block hash](#predict-the-block-hash)
+    -   [Math](#math)
+        -   [Token sale](#token-sale)
+        -   [Token whale](#token-whale)
 
 ## Lotteries
 
@@ -266,3 +270,52 @@ msg.value = numTokens * PRICE_PER_TOKEN;
 The resulting `msg.value` is around `0.41` ETH. Then, 1 token can be sold for 1 ETH, completing the challenge.
 
 [Test](./test/math/TestTokenSaleChallenge.t.sol)
+
+### Token whale
+
+The goal of this challenge is to accumulate at least 1,000,000 tokens with a starting balance and total supply of 1,000 tokens.
+
+We can exploit this contract by underflowing a variable, converting it into a huge number of tokens:
+
+```solidity
+function transferFrom(
+  address from,
+  address to,
+  uint256 value
+) public {
+  require(balanceOf[from] >= value);
+  require(balanceOf[to] + value >= balanceOf[to]);
+  require(allowance[from][msg.sender] >= value);
+
+  allowance[from][msg.sender] -= value;
+  _transfer(to, value);
+}
+
+function _transfer(address to, uint256 value) internal {
+  balanceOf[msg.sender] -= value; // <======== THIS
+  balanceOf[to] += value;
+
+  emit Transfer(msg.sender, to, value);
+}
+```
+
+If we can make `balanceOf[msg.sender] -= value;` underflow, we'll solve the challenge.
+
+In order to do that, the balance of the `msg.sender` has to be lower than the `value` of tokens.
+
+It wouldn't be possible in a simple `transfer()`, as it checks the balance of the `msg.sender`.
+
+On the other hand, `transferFrom()` calls `_transfer()` but only checks the allowance and not the balance of `msg.sender`.
+
+With all of this information we're able to perform the attack:
+
+1. Transfer 501 tokens from the player to another player controlled address
+2. The balance of the Attacker will be 499 and the Secondary Account will be 501
+3. Approve to spend 500 tokens from the original address
+4. Let the Attacker call `transferFrom` to move 500 tokens from the Secondary Account to his own address
+
+The Secondary account has enough balance (501 - 500), so it passes the `require` statements.
+
+The Attacker account balance will underflow (499-500), so instead of resulting in -1, it is MAX_UINT_256, exploiting the contract.
+
+[Test](./test/math/TestTokenWhaleChallenge.t.sol)
