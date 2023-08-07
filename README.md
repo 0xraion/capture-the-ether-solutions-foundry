@@ -23,6 +23,7 @@ Most of the contracts were rewritten slightly so they still compile with newer s
     - [Token whale](#token-whale)
     - [Retirement Fund](#retirement-fund)
     - [Mapping](#mapping)
+    - [Donation](#donation)
 
 ## Lotteries
 
@@ -402,3 +403,46 @@ challenge.set(attackSlot, 1);
 ```
 
 [Test](./test/math/TestMappingChallenge.t.sol)
+
+### Donation
+
+In this challenge we have to withdraw all the Ether from the contract. The only place where it is possible is:
+
+```solidity
+function withdraw() public {
+  require(msg.sender == owner);
+  msg.sender.transfer(address(this).balance);
+}
+```
+
+But it requires to be the `owner`. So, we'll have to find a way to become the new owner.
+
+That's where we get to the `donate()` function which has 2 major problems.
+First it calculates `scale` wrong, as it results in 10**36.
+Also the `donation` variable has no location defined.
+
+```solidity
+Donation donation;
+```
+
+In this case, it assumes `storage` by default, leading to an unexpected behavior. It acts as a pointer to the storage, and it will write to the first slots when changing its attributes:
+
+```solidity
+struct Donation {
+  uint256 timestamp;
+  uint256 etherAmount;
+}
+
+Donation[] public donations;
+address public owner;
+```
+
+Setting the `timestamp` will write to the `slot 0` => the array length, and setting `etherAmount` will write to the `slot 1` => the `owner`.
+
+So, to set the `owner` we just have to set `etherAmount` to our address.
+
+The only reamaining challenge is passing the `require(msg.value == etherAmount / scale);`
+
+It is straightforward. We convert our a decimal number and divide by the `scale` (10**36)
+
+[Test](./test/math/TestDonationChallenge.t.sol)
