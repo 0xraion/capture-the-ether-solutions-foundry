@@ -344,7 +344,7 @@ It doesn't seem to be possible to add more funds with any function, and the cont
 
 But there are other ways to force sending Ether to a contract. In this case we're making use of the following:
 
-[here](https://solidity-by-example.org/hacks/self-destruct/):
+[Docs](https://solidity-by-example.org/hacks/self-destruct/):
 
 > A malicious contract can use selfdestruct to force sending Ether to any contract.
 
