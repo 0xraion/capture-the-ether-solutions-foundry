@@ -8,19 +8,20 @@ Most of the contracts were rewritten slightly so they still compile with newer s
 
 ## Contents
 
--   [Capture the Ether Solutions](#capture-the-ether-solutions)
-    -   [Disclaimer](#disclaimer)
-    -   [Contents](#contents)
-    -   [Lotteries](#lotteries)
-        -   [Guess the number](#guess-the-number)
-        -   [Guess the secret number](#guess-the-secret-number)
-        -   [Guess the random number](#guess-the-random-number)
-        -   [Guess the new number](#guess-the-new-number)
-        -   [Predict the future](#predict-the-future)
-        -   [Predict the block hash](#predict-the-block-hash)
-    -   [Math](#math)
-        -   [Token sale](#token-sale)
-        -   [Token whale](#token-whale)
+- [Capture the Ether Solutions](#capture-the-ether-solutions)
+  - [Disclaimer](#disclaimer)
+  - [Contents](#contents)
+  - [Lotteries](#lotteries)
+    - [Guess the number](#guess-the-number)
+    - [Guess the secret number](#guess-the-secret-number)
+    - [Guess the random number](#guess-the-random-number)
+    - [Guess the new number](#guess-the-new-number)
+    - [Predict the future](#predict-the-future)
+    - [Predict the block hash](#predict-the-block-hash)
+  - [Math](#math)
+    - [Token sale](#token-sale)
+    - [Token whale](#token-whale)
+    - [Retirement Fund](#retirement-fund)
 
 ## Lotteries
 
@@ -319,3 +320,32 @@ The Secondary account has enough balance (501 - 500), so it passes the `require`
 The Attacker account balance will underflow (499-500), so instead of resulting in -1, it is MAX_UINT_256, exploiting the contract.
 
 [Test](./test/math/TestTokenWhaleChallenge.t.sol)
+
+### Retirement Fund
+
+In this challenge we're the `beneficiary` of part of a retirement fund if the `owner` withdraws the Ether early.
+
+The only callable function by the `beneficiary` is `collectPenalty`:
+
+```solidity
+function collectPenalty() public {
+  require(msg.sender == beneficiary);
+
+  uint256 withdrawn = startBalance - address(this).balance;
+  require(withdrawn > 0);
+
+  msg.sender.transfer(address(this).balance);
+}
+```
+
+Here we can "bypass" the `require(withdrawn > 0)` if we can perform an underflow in `startBalance - address(this).balance`.
+
+It doesn't seem to be possible to add more funds with any function, and the contract does not have a [payable fallback function](https://docs.soliditylang.org/en/develop/contracts.html#fallback-function). So it shouldn't be possible to do it, right?
+
+But there are other ways to force sending Ether to a contract. In this case we're making use of the following:
+
+[here](https://solidity-by-example.org/hacks/self-destruct/):
+
+> A malicious contract can use selfdestruct to force sending Ether to any contract.
+
+We can create a contract that autodestructs and sends Ether to the original contract address, perform an underflow, and then withdraw the funds
