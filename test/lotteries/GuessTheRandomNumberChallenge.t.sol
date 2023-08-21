@@ -8,21 +8,18 @@ import {GuessTheRandomNumberChallenge} from "../../src/lotteries/GuessTheRandomN
 contract TestGuessTheRandomNumberChallenge is Test {
     GuessTheRandomNumberChallenge challenge;
 
-    address deployer;
-    address user;
+    address deployer = makeAddr("deployer");
+    address player = makeAddr("player");
 
     function setUp() external {
-        deployer = address(1);
-        user = address(2);
-
         vm.deal(deployer, 1 ether);
-        vm.deal(user, 1 ether);
+        vm.deal(player, 1 ether);
 
         vm.prank(deployer);
         challenge = new GuessTheRandomNumberChallenge{value: 1 ether}();
     }
 
-    function testIsComplete() external {
+    function test_Solution() external {
         // answer variable is generated "randomly" and has internal visibility (default visibilty for state variables)
         // data in smart contracts can still be read despite being declared as "internal" or "private"
         // to do that we need to understand how storage works and how to read storage slots
@@ -30,10 +27,10 @@ contract TestGuessTheRandomNumberChallenge is Test {
         // in this case we need to access storage slot 0 to access the answer variable
         uint8 answer = uint8(uint256(vm.load(address(challenge), 0)));
 
-        vm.prank(user);
+        vm.prank(player);
         challenge.guess{value: 1 ether}(answer);
 
-        assertEq(user.balance, 2 ether);
+        assert(player.balance == 2 ether);
         assert(challenge.isComplete());
     }
 }

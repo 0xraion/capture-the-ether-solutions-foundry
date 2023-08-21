@@ -10,27 +10,28 @@ import {AttackRetirementFund} from "../../src/math/AttackRetirementFund.sol";
 contract TestRetirementFundChallenge is Test {
     RetirementFundChallenge challenge;
     AttackRetirementFund attack;
-    address deployer;
-    address user;
+
+    address deployer = makeAddr("deployer");
+    address player = makeAddr("player");
 
     function setUp() external {
-        deployer = address(1);
-        user = address(2);
-
         vm.deal(deployer, 1 ether);
-        vm.deal(user, 0.01 ether);
+        vm.deal(player, 0.01 ether);
+
         vm.prank(deployer);
 
-        challenge = new RetirementFundChallenge{value: 1 ether}(user);
+        challenge = new RetirementFundChallenge{value: 1 ether}(player);
     }
 
-    function testAttack() external {
-        vm.startPrank(user);
-        attack = new AttackRetirementFund{value: 0.01 ether}(address(challenge));
+    function test_Solution() external {
+        vm.startPrank(player);
+        attack = new AttackRetirementFund{value: 0.01 ether}(
+            address(challenge)
+        );
 
         challenge.collectPenalty();
         vm.stopPrank();
-        
+
         assert(challenge.isComplete());
     }
 }

@@ -24,6 +24,8 @@ Most of the contracts were rewritten slightly so they still compile with newer s
     - [Retirement Fund](#retirement-fund)
     - [Mapping](#mapping)
     - [Donation](#donation)
+  - [Accounts](#accounts)
+    - [Fuzzy Identity](#fuzzy-identity)
 
 ## Lotteries
 
@@ -446,3 +448,7 @@ The only reamaining challenge is passing the `require(msg.value == etherAmount /
 It is straightforward. We convert our a decimal number and divide by the `scale` (10**36)
 
 [Test](./test/math/TestDonationChallenge.t.sol)
+
+## Accounts
+
+### Fuzzy Identity

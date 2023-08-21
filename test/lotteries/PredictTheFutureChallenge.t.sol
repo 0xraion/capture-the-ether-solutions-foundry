@@ -10,23 +10,20 @@ contract TestPredictTheFutureChallenge is Test {
     PredictTheFutureChallenge challenge;
     AttackPredictTheFutureChallenge attack;
 
-    address deployer;
-    address attacker;
+    address deployer = makeAddr("deployer");
+    address player = makeAddr("player");
 
     function setUp() external {
-        deployer = address(1);
-        attacker = address(2);
-
         vm.deal(deployer, 1 ether);
-        vm.deal(attacker, 1 ether);
+        vm.deal(player, 1 ether);
 
         vm.prank(deployer);
 
         challenge = new PredictTheFutureChallenge{value: 1 ether}();
     }
 
-    function testAttack() external {
-        vm.startPrank(attacker);
+    function test_Solution() external {
+        vm.startPrank(player);
         attack = new AttackPredictTheFutureChallenge(address(challenge));
 
         // lock in any number from 0-9
@@ -46,7 +43,7 @@ contract TestPredictTheFutureChallenge is Test {
             }
         }
 
-        assertEq(attacker.balance, 2 ether);
+        assert(player.balance == 2 ether);
         assert(challenge.isComplete());
     }
 }

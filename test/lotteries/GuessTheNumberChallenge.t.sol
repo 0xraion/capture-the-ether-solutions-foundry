@@ -8,25 +8,22 @@ import {GuessTheNumberChallenge} from "../../src/lotteries/GuessTheNumberChallen
 contract TestGuessTheNumberChallenge is Test {
     GuessTheNumberChallenge challenge;
 
-    address deployer;
-    address user;
+    address deployer = makeAddr("deployer");
+    address player = makeAddr("player");
 
     function setUp() external {
-        deployer = address(1);
-        user = address(2);
-
         vm.deal(deployer, 1 ether);
-        vm.deal(user, 1 ether);
+        vm.deal(player, 1 ether);
 
         vm.prank(deployer);
         challenge = new GuessTheNumberChallenge{value: 1 ether}();
     }
 
-    function testIsComplete() external {
-        vm.prank(user);
+    function test_Solution() external {
+        vm.prank(player);
         challenge.guess{value: 1 ether}(42);
 
-        assertEq(user.balance, 2 ether);
+        assert(player.balance == 2 ether);
         assert(challenge.isComplete());
     }
 }

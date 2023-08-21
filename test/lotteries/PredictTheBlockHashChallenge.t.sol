@@ -8,22 +8,19 @@ import {PredictTheBlockHashChallenge} from "../../src/lotteries/PredictTheBlockH
 contract TestPredictTheBlockHashChallenge is Test {
     PredictTheBlockHashChallenge challenge;
 
-    address deployer;
-    address user;
+    address deployer = makeAddr("deployer");
+    address player = makeAddr("player");
 
     function setUp() external {
-        deployer = address(1);
-        user = address(2);
-
         vm.deal(deployer, 1 ether);
-        vm.deal(user, 1 ether);
+        vm.deal(player, 1 ether);
 
         vm.prank(deployer);
         challenge = new PredictTheBlockHashChallenge{value: 1 ether}();
     }
 
-    function testIsComplete() external {
-        vm.startPrank(user);
+    function test_Solution() external {
+        vm.startPrank(player);
 
         // answer is the blockhash of the settlementBlockNumber
         // you can only access the the hashes of the most recent 256 blocks
@@ -35,7 +32,8 @@ contract TestPredictTheBlockHashChallenge is Test {
         challenge.settle();
 
         vm.stopPrank();
-        assertEq(user.balance, 2 ether);
+
+        assert(player.balance == 2 ether);
         assert(challenge.isComplete());
     }
 }

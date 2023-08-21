@@ -15,22 +15,26 @@ interface IMappingChallenge {
 contract TestMappingChallenge is Test {
     IMappingChallenge challenge;
 
-    address deployer;
-    address user;
+    address deployer = makeAddr("deployer");
+    address player = makeAddr("player");
 
     function setUp() external {
         vm.prank(deployer);
-       
+
         //Due to incompatible solidity versions (0.4 v/s 0.8), we are directly deploying the
         //compiled bytecode on blockchain on behalf of deployer using "deployCode"
-        address challengeAddress = deployCode("MappingChallenge.sol:MappingChallenge");
+        address challengeAddress = deployCode(
+            "MappingChallenge.sol:MappingChallenge"
+        );
         challenge = IMappingChallenge(challengeAddress);
     }
 
-    function testIsComplete() external {
+    function test_Solution() external {
         uint256 startingSlot = uint256(keccak256(abi.encode(1)));
 
         uint256 attackSlot = type(uint256).max - startingSlot + 1;
+
+        vm.prank(player);
 
         challenge.set(attackSlot, 1);
 
