@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import {Test} from "forge-std/Test.sol";
-import {PredictTheBlockHashChallenge} from "../../src/lotteries/PredictTheBlockHashChallenge.sol";
+import {PredictTheBlockHashChallenge} from "../../src/lotteries/challenges/PredictTheBlockHashChallenge.sol";
 
 contract TestPredictTheBlockHashChallenge is Test {
     PredictTheBlockHashChallenge challenge;

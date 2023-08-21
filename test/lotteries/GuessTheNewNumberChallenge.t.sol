@@ -3,8 +3,8 @@
 pragma solidity ^0.8.0;
 
 import {Test} from "forge-std/Test.sol";
-import {GuessTheNewNumberChallenge} from "../../src/lotteries/GuessTheNewNumberChallenge.sol";
-import {AttackGuessTheNewNumberChallenge} from "../../src/lotteries/AttackGuessTheNewNumberChallenge.sol";
+import {GuessTheNewNumberChallenge} from "../../src/lotteries/challenges/GuessTheNewNumberChallenge.sol";
+import {AttackGuessTheNewNumberChallenge} from "../../src/lotteries/helpers/AttackGuessTheNewNumberChallenge.sol";
 
 contract TestGuessTheNewNumberChallenge is Test {
     GuessTheNewNumberChallenge challenge;

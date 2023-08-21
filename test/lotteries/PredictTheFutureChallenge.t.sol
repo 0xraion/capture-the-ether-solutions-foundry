@@ -3,8 +3,8 @@
 pragma solidity ^0.8.0;
 
 import {Test} from "forge-std/Test.sol";
-import {PredictTheFutureChallenge} from "../../src/lotteries/PredictTheFutureChallenge.sol";
-import {AttackPredictTheFutureChallenge} from "../../src/lotteries/AttackPredictTheFutureChallenge.sol";
+import {PredictTheFutureChallenge} from "../../src/lotteries/challenges/PredictTheFutureChallenge.sol";
+import {AttackPredictTheFutureChallenge} from "../../src/lotteries/helpers/AttackPredictTheFutureChallenge.sol";
 
 contract TestPredictTheFutureChallenge is Test {
     PredictTheFutureChallenge challenge;

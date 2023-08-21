@@ -4,7 +4,7 @@ pragma solidity ^0.7.0;
 pragma abicoder v2;
 
 import {Test, console} from "forge-std/Test.sol";
-import {TokenSaleChallenge} from "../../src/math/TokenSaleChallenge.sol";
+import {TokenSaleChallenge} from "../../src/math/challenges/TokenSaleChallenge.sol";
 
 contract TestTokenSaleChallenge is Test {
     TokenSaleChallenge challenge;

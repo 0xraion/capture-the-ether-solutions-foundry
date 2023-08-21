@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import {Test, console} from "forge-std/Test.sol";
-import {GuessTheRandomNumberChallenge} from "../../src/lotteries/GuessTheRandomNumberChallenge.sol";
+import {GuessTheRandomNumberChallenge} from "../../src/lotteries/challenges/GuessTheRandomNumberChallenge.sol";
 
 contract TestGuessTheRandomNumberChallenge is Test {
     GuessTheRandomNumberChallenge challenge;

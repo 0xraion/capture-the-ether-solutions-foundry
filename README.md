@@ -6,6 +6,8 @@ Solutions to the [Capture The Ether](https://capturetheether.com/challenges/) CT
 
 Most of the contracts were rewritten slightly so they still compile with newer solidity versions. Comments were added for those parts.
 
+I also didn't add solutions for the accounts challenges because they are not related to smart contract vulnerabilites. If you want to read writeups for those challenges check out the writeups from [cmichel](https://cmichel.io/capture-the-ether-solutions/)
+
 ## Contents
 
 - [Capture the Ether Solutions](#capture-the-ether-solutions)
@@ -24,8 +26,11 @@ Most of the contracts were rewritten slightly so they still compile with newer s
     - [Retirement Fund](#retirement-fund)
     - [Mapping](#mapping)
     - [Donation](#donation)
-  - [Accounts](#accounts)
-    - [Fuzzy Identity](#fuzzy-identity)
+    - [Fifty Years](#fifty-years)
+  - [Miscellaneous](#miscellaneous)
+    - [Assume ownership](#assume-ownership)
+    - [Token bank](#token-bank)
+- [Acknowledgments](#acknowledgments)
 
 ## Lotteries
 
@@ -68,7 +73,7 @@ for (uint8 i = 0; i <= type(uint8).max; i++) {
                 console.log("Correct answer: ", i);
 
                 // call contract
-                vm.prank(user);
+                vm.prank(player);
                 challenge.guess{value: 1 ether}(i);
             }
         }
@@ -449,6 +454,77 @@ It is straightforward. We convert our a decimal number and divide by the `scale`
 
 [Test](./test/math/TestDonationChallenge.t.sol)
 
-## Accounts
+### Fifty Years
 
-### Fuzzy Identity
+The goal of this challenge is to withdraw all the Ether from the contract.
+
+In order to do that we will need to call the `withdraw` function and satisfy two requirements. We're the `owner`, so that's fine. The second conditions is that we wait 50 years to withdraw the Ether:
+
+```solidity
+function withdraw(uint256 index) public {
+  require(msg.sender == owner);
+  require(now >= queue[index].unlockTimestamp);
+  // ...
+  msg.sender.transfer(total);
+}
+```
+
+50 years is too long, so we'll try to find a way of modifying `queue[index].unlockTimestamp`, so that it satisfies the requirement.
+
+```solidity
+function upsert(uint256 index, uint256 timestamp) public payable {
+  if (index >= head && index < queue.length) {
+    Contribution storage contribution = queue[index];
+    contribution.amount += msg.value;
+  } else {
+    require(timestamp >= queue[queue.length - 1].unlockTimestamp + 1 days);
+
+    contribution.amount = msg.value;
+    contribution.unlockTimestamp = timestamp;
+    queue.push(contribution);
+  }
+}
+```
+
+There's a vulnerability that might be exploited here. The `contribution` variable has an [uninitialized storage pointer](https://www.bookstack.cn/read/ethereumbook-en/spilt.16.c2a6b48ca6e1e33c.md#n76zm). Meaning that modifying it will modify the first slots of the storage: `contribution.amount` will change the `slot 0`, which corresponds to the array length, and `contribution.unlockTimestamp` will modify the `slot 1`, which is the `head` variable.
+
+First we will expand the array length, so that we can later modify any slot in the storage. We also have to satisfy this condition:
+
+```solidity
+require(timestamp >= queue[queue.length - 1].unlockTimestamp + 1 days);
+```
+
+So, we will satisfy the condition by overflowing the result in a way that it equals `0` => `timestamp = 2^256 - 1 day`. We will also send `value = 1`, so that it updates `contribution.amount => slot 0 => array length`.
+
+Then we have to reset the `head` value which was overwritten previously with garbage. This will also increase the array length by one.
+
+We can finally create a contract that autodestructs and sends the remaining wei we need to pass the `withdraw` requirements.
+
+Call `withdraw` and we're done :)
+
+## Miscellaneous
+
+### Assume ownership
+
+The constructor function was misspelled making it public. We simply have to call it to solve this challenge.
+
+[Test](./test/miscellaneous/AssumeOwnershipChallenge.t.sol)
+
+### Token bank
+
+This token bank contract uses an ERC-223 token. This token standard calls `tokenFallback()` on the recipient of a `transfer()` in case it is a contract. 
+Knowing this we immediately want to look for possible re-entrancy attacks. 
+And thats how we solve this challenge. In this case the balance is updated after calling the `transfer()` function. 
+So it is possible to create a contract which exploits that via a re-entrancy attack and withdraw all the tokens.
+
+[Test](./test/miscellaneous/TokenBankChallenge.t.sol)
+
+# Acknowledgments
+
+The following ressources were a big help in solving this CTF:
+- [Solidity Docs](https://docs.soliditylang.org/en/v0.8.21/)
+- [Solidity by Example](https://solidity-by-example.org/)
+- [Solutions and Writeups by 0xJuancito](https://github.com/0xJuancito/capture-the-ether-solutions)
+- [Writeups by cmichel](https://cmichel.io/capture-the-ether-solutions/)
+
+I especially want to thank [0xJuancito](https://github.com/0xJuancito) because I used most of his writeups cause I couldn't have worded them better myself
