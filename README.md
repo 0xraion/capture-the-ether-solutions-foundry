@@ -506,15 +506,31 @@ Call `withdraw` and we're done :)
 
 ### Assume ownership
 
-The constructor function was misspelled making it public. We simply have to call it to solve this challenge.
+The constructor function was misspelled making it public.
+```solidity
+function AssumeOwmershipChallenge() public {
+        owner = msg.sender;
+    }
+```
+We simply have to call it to solve this challenge.
 
 [Test](./test/miscellaneous/AssumeOwnershipChallenge.t.sol)
 
 ### Token bank
 
-This token bank contract uses an ERC-223 token. This token standard calls `tokenFallback()` on the recipient of a `transfer()` in case it is a contract. 
+The token bank contract uses an ERC-223 token. 
+
+This token standard calls `tokenFallback()` on the recipient of a `transfer()` in case it is a contract. 
+
 Knowing this we immediately want to look for possible re-entrancy attacks. 
+
 And thats how we solve this challenge. In this case the balance is updated after calling the `transfer()` function. 
+
+```solidity
+require(token.transfer(msg.sender, amount));
+    balanceOf[msg.sender] -= amount;
+```
+
 So it is possible to create a contract which exploits that via a re-entrancy attack and withdraw all the tokens.
 
 [Test](./test/miscellaneous/TokenBankChallenge.t.sol)
